@@ -9,10 +9,14 @@
 
   <style>
     * {
-      margin: 0;
+      margin: 1;
       padding: 0;
       box-sizing: border-box;
     }
+
+	#root>canvas {
+		border:solid 2px red;
+	}
   </style>
 
   <body style="background: #000">
@@ -178,6 +182,30 @@
       return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     }
 
+	function getRandomColor(random)
+	{
+		const red = Math.floor(random() * 256); // Valor entre 0 y 255
+		const green = Math.floor(random() * 256);
+		const blue = Math.floor(random() * 256);
+		
+		return `rgb(${red}, ${green}, ${blue})`;
+	}
+
+	function getColorFromId(id)
+	{
+		const random = (seed) =>
+		{
+			const x = Math.sin(seed) * 10000;
+			return x - Math.floor(x);
+		};
+
+		const red = Math.floor(random(id) * 256);
+		const green = Math.floor(random(id + 1) * 256);
+		const blue = Math.floor(random(id + 2) * 256);
+
+		return `rgb(${red}, ${green}, ${blue})`;
+	}
+
     const mouse = {
       x: 0,
       y: 0,
@@ -188,121 +216,230 @@
       mouse.y = event.y;
     });
 
-    class FlowFieldEffect {
-      #ctx;
-      #width;
-      #height;
-      #random;
-      constructor(ctx, width, height, radius, random, reception) {
-        this.#ctx = ctx;
-        this.reception = reception;
-        this.#random = random;
-        this.#width = width;
-        this.#height = height;
-      }
+	class FlowFieldEffect
+	{
+		#ctx;
+		#width;
+		#height;
+		#random;
 
-      draw() {
-        console.log('Pintando', this.reception);
-      }
-    }
+		constructor(ctx, width, height, rng, reception)
+		{
+			this.#ctx = ctx;
+			this.reception = reception;
+			this.#width = width;
+			this.#random = rng;
+			this.#height = height;
+			this.scale = 0.5 //getRandomFloat(0, 0.9, this.#random);
+		}
 
-    const draw = (canvas, ctx, reception) => {
-      const {packetId} = reception
+	packetText()
+	{
+		const station = this.reception.stationName;
+		const satellite = this.reception.satelliteName;
+		const score = this.reception.receptionScore;
+		const font = "bold 20px Arial";
+		const colorf = getColorFromId(this.reception.tokenId);
+		const colors = colorf
+		const colorb = getColorFromId(this.reception.tokenId + 50);
 
-      const seed = parseInt(packetId.substring(0, 8), 16);
-      const rng = new Math.seedrandom(seed.toString());
+				// STATION //
+		this.#ctx.textAlign = "center";
+		this.#ctx.translate( 0, -260);
+		this.#ctx.lineWidth = 1;
+		this.#ctx.font = font;
+		this.#ctx.fillStyle = colorf;
+		this.#ctx.strokeStyle = colors;
+		this.#ctx.strokeText("STATION: " + station, 0, 0);
+		this.#ctx.fillText("STATION: " + station, 0, 0);
+		
+		this.#ctx.lineWidth = 5;
+		this.#ctx.strokeStyle = colorb;
+		var dimenStat = this.#ctx.measureText("STATION: " + station + 10);
+		this.#ctx.strokeRect( -dimenStat.width / 2, -25, dimenStat.width, 40);
+		this.#ctx.translate( 0, 260);
+		
+				// SATELLITE //
+		this.#ctx.translate( 0, 230);
+		this.#ctx.textAlign = "center";
+		this.#ctx.lineWidth = 1;
+		this.#ctx.font = font;
+		this.#ctx.fillStyle = colorf;
+		this.#ctx.strokeStyle = colors;
+		this.#ctx.strokeText("SATELLITE: " + satellite, 0, 0);
+		this.#ctx.fillText("SATELLITE: " + satellite, 0, 0);
+		
+		this.#ctx.lineWidth = 5;
+		this.#ctx.strokeStyle = colorb;
+		var dimenStat = this.#ctx.measureText("SATELLITE: " + satellite + 10);
+		this.#ctx.strokeRect( -dimenStat.width / 2, -25, dimenStat.width, 40);
+		this.#ctx.translate( 0, -230);
 
-      for (i in seed) {
-        rng();
-      }
+				// SCORE //
+		this.#ctx.translate( 0, -200);
+		this.#ctx.textAlign = "center";
+		this.#ctx.lineWidth = 1;
+		this.#ctx.font = font;
+		this.#ctx.fillStyle = (score > 5) ? "green" : "red";
+		this.#ctx.strokeStyle = (score > 5) ? "green" : "red";
+		this.#ctx.strokeText(score + " / 10", 0, 0);
+		this.#ctx.fillText(score + " / 10", 0, 0);
+		
+		this.#ctx.lineWidth = 5;
+		this.#ctx.strokeStyle = colorb;
+		var dimenStat = this.#ctx.measureText(score + " / 10" + 10);
+		this.#ctx.strokeRect(-dimenStat.width / 2, -30, dimenStat.width, 50);
+		this.#ctx.translate( 0, -250);
+	}
 
-      const width = canvas.width;
-      const height = canvas.height;
-      const radius = 1;
-      const flowfield = new FlowFieldEffect(
-        ctx,
-        width,
-        height,
-        radius,
-        rng,
-        reception,
-      );
-      flowfield.draw();
-    };
 
-    async function main(
-      reception = {
-        tokenId: 1,
-        rawPacket: 'sgAGAhIMUQ/j//z7AAAAAAAAAAAAAA==',
-        packetId: '7f9a1fec-7802-4d08-b72f-d0e47a81d8ce',
-        stationName: 'EA2CQ',
-        stationId: 165308769,
-        location_lat: 42.757,
-        location_long: -2.861,
-        timestamp: '+055733-12-13T20:32:00.203+00:00',
-        receptionScore: 7.5,
-      },
-    ) {
-      console.log('main: ', reception);
-      let params = new URL(document.location).searchParams;
+		drawLine(level)
+		{
+			const spread = Number(this.reception.receptionScore) / 10;
+			const maxLevel = 5;
+			const branches = 2;
+			const angle = Math.PI * 2 * spread ;
 
-      let tokenId = params.get('tokenId') ?? reception.tokenId;
-      let rawPacket = params.get('rawPacket') ?? reception.rawPacket;
-      let packetId = params.get('packetId')?.split('-').join('') ?? reception.packetId.split('-').join('');
-      let stationName = params.get('stationName') ?? reception.stationName;
-      let stationId = params.get('stationId') ?? reception.stationId;
-      let location_lat = params.get('location_lat') ?? reception.location_lat;
-      let location_long = params.get('location_long') ?? reception.location_long;
-      let timestamp = new Date(params.get('timestamp')).getTime() ?? new Date(reception.timestamp).getTime();
-      let receptionScore = params.get('receptionScore') ?? reception.receptionScore;
-      let distance = params.get('distance') ?? reception.distance;
-      let canvasWidth = params.get('canvas_width') ?? 600;
-      let canvasHeight = params.get('canvas_height') ?? 600;
+			if (level > maxLevel) return;
+			this.#ctx.strokeStyle = getRandomColor(this.#random);
+			this.#ctx.lineWidth = 5;
+			this.#ctx.beginPath();
+			this.#ctx.moveTo(0, 0);
+			this.#ctx.lineTo(150, 0);
+			this.#ctx.stroke();
 
-      if (
-        tokenId &&
-        rawPacket &&
-        packetId &&
-        stationName &&
-        stationId &&
-        location_lat &&
-        location_long &&
-        timestamp &&
-        receptionScore &&
-        distance
-      ) {
-        reception = {
-          tokenId,
-          rawPacket,
-          packetId: rawPacket.split('-').join(''),
-          stationName,
-          stationId,
-          location_lat,
-          location_long,
-          timestamp: new Date(timestamp).getTime(),
-          receptionScore,
-          distance,
-        };
-      }
-      console.log('reception: ', reception);
+		
+			for (let i = 0; i < branches; i++) 
+			{
+				this.#ctx.save();
+				this.#ctx.translate(300 * i / (branches + 1), 0);
+				this.#ctx.scale(this.scale, this.scale); //jugar
+				this.#ctx.save();
 
-      let canvasRoot = document.getElementById('root');
-      if (canvasRoot.children.length > 0) {
-        canvas = canvasRoot.children[0];
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      } else {
-        canvas = document.createElement('canvas');
-        canvas.id = 'canvas';
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        canvasRoot.appendChild(canvas);
-        ctx = canvas.getContext('2d');
-      }
-      draw(canvas, ctx, reception);
-    }
+				this.#ctx.rotate(angle);
+				this.drawLine(level + 1);
+				this.#ctx.restore();
+				this.#ctx.save();
 
-    let canvas, ctx;
+				this.#ctx.rotate(-angle);
+				this.drawLine(level + 1);
+				this.#ctx.restore();
 
-    document.onload = main();
+				this.#ctx.restore();
+				}
+		}
+
+		draw()
+		{
+			const sides = Math.floor(this.reception.receptionScore) + 3;
+			this.#ctx.clearRect(0, 0, this.#width, this.#height); // Limpia el canvas antes de dibujar
+			this.#ctx.translate(this.#width / 2, this.#height / 2);
+			for (let i = 0; i < sides; i++)
+			{
+				this.drawLine(0);
+				this.#ctx.rotate(((Math.PI * 2) / sides));
+			}
+			this.packetText();
+		}
+	}
+
+	const draw = (canvas, ctx, reception) =>
+	{
+		const {packetId} = reception
+
+		const seed = parseInt(packetId.substring(0, 8), 16);
+		const rng = new Math.seedrandom(seed.toString());
+
+		for (i in seed)
+		{
+			rng();
+		}
+		console.log(reception);
+		const width = canvas.width;
+		const height = canvas.height;
+		const radius = 1;
+		const flowfield = new FlowFieldEffect(ctx, width, height, rng, reception);
+		flowfield.draw();
+	};
+
+	async function main(
+		reception =
+		{
+			tokenId: 1,
+			rawPacket: 'sgAGAhIMUQ/j//z7AAAAAAAAAAAAAA==',
+			packetId: '7f9a1fec-7802-4d08-b72f-d0e47a81d8ce',
+			stationName: 'EA2CQ',
+			stationId: 165308769,
+			location_lat: 42.757,
+			location_long: -2.861,
+			timestamp: '+055733-12-13T20:32:00.203+00:00',
+			receptionScore: 7.5
+		},
+	)	{
+			console.log('main: ', reception);
+			let params = new URL(document.location).searchParams;
+
+			let tokenId = params.get('tokenId') ?? reception.tokenId;
+			let rawPacket = params.get('rawPacket') ?? reception.rawPacket;
+			let packetId = params.get('packetId')?.split('-').join('') ?? reception.packetId.split('-').join('');
+			let stationName = params.get('stationName') ?? reception.stationName;
+			let stationId = params.get('stationId') ?? reception.stationId;
+			let location_lat = params.get('location_lat') ?? reception.location_lat;
+			let location_long = params.get('location_long') ?? reception.location_long;
+			let timestamp = new Date(params.get('timestamp')).getTime() ?? new Date(reception.timestamp).getTime();
+			let receptionScore = params.get('receptionScore') ?? reception.receptionScore;
+			let distance = params.get('distance') ?? reception.distance;
+			let canvasWidth = params.get('canvas_width') ?? 600;
+			let canvasHeight = params.get('canvas_height') ?? 600;
+
+			if (
+				tokenId &&
+				rawPacket &&
+				packetId &&
+				stationName &&
+				stationId &&
+				location_lat &&
+				location_long &&
+				timestamp &&
+				receptionScore &&
+				distance
+			) {
+				reception =
+				{
+					tokenId,
+					rawPacket,
+					packetId: rawPacket.split('-').join(''),
+					stationName,
+					stationId,
+					location_lat,
+					location_long,
+					timestamp: new Date(timestamp).getTime(),
+					receptionScore,
+					distance,
+				};
+			}
+			console.log('reception: ', reception);
+
+			let canvasRoot = document.getElementById('root');
+			if (canvasRoot.children.length > 0)
+			{
+				canvas = canvasRoot.children[0];
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+			}
+			else
+			{
+				canvas = document.createElement('canvas');
+				canvas.id = 'canvas';
+				canvas.width = canvasWidth;
+				canvas.height = canvasHeight;
+				canvasRoot.appendChild(canvas);
+				ctx = canvas.getContext('2d');
+			}
+			draw(canvas, ctx, reception);
+		}
+
+	let canvas, ctx;
+
+	document.onload = main();
   </script>
 </html>
