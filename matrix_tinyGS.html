@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>TINYGS</title>
+</head>
+
+<style>
+	* {
+		margin: 1;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	#root>canvas {
+		border: solid 2px red;
+	}
+</style>
+
+<body style="background: #000000">
+	<center id="center">
+		<div id="matrix">
+			<canvas id="canvas1"></canvas>
+		</div>
+		<div id="root">
+			<!-- Injected Canva by index.js -->
+		</div>
+		<script>
+			const canvas = document.getElementById('canvas1');
+			const ctx = canvas.getContext('2d');
+			canvas.width = 600;
+			canvas.height = 600;
+
+			//let gradient = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 100, canvas.width/2, canvas.height/2, 500); // Crea un gradiente de color para el texto
+			let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height); // Crea un gradiente de color para el texto
+			gradient.addColorStop(0, "red");
+			gradient.addColorStop(0.2, "yellow");
+			gradient.addColorStop(0.4, "green");
+			gradient.addColorStop(0.6, "cyan");
+			gradient.addColorStop(0.8, "blue");
+			gradient.addColorStop(1, "magenta");
+
+			class Symbol {
+				constructor(x, y, fontSize, canvasHeight) {
+					this.characters = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"; //"♔♕♖♗♘♙CHESS♚♛♜♝♞♟☀☁❆WEATHER❅❄"
+					this.x = x;
+					this.y = y;
+					this.fontSize = fontSize;
+					this.text = "";
+					this.canvasHeight = canvasHeight;
+				}
+				draw(context) {
+					this.text = this.characters.charAt(Math.floor(Math.random() * this.characters.length)); // Caracteres aleatórios
+					context.fillText(this.text, this.x * this.fontSize, this.y * this.fontSize); // Posición del texto
+					if (this.y * this.fontSize > this.canvasHeight && Math.random() > 0.98) // Si el texto llega al final del canvas pasa a la siguiente línea
+						this.y = 0; // Reinicia la posición 'y' del texto para que se mueva hacia arriba en el canvas
+					else
+						this.y++; // Aumenta la posición 'y' del texto para que se mueva hacia abajo en el canvas
+
+				}
+			}
+
+			class Effect {
+				constructor(canvasWidth, canvasHeight) {
+					this.canvasWidth = canvasWidth;
+					this.canvasHeight = canvasHeight;
+					this.fontSize = 15;
+					this.columns = this.canvasWidth / this.fontSize;
+					this.symbols = [];
+					this.#initialize();
+					console.log(this.symbols);
+				}
+				#initialize() {
+					for (let i = 0; i < this.columns; i++) // Crea una columna de símbolos en el canvas con el tamaño de fuente definido
+						this.symbols[i] = new Symbol(i, 0, this.fontSize, this.canvasHeight); // Crea un nuevo símbolo en cada columna del canvas con la posición 'x' e 'y' y el tamaño de fuente definido 
+				}
+			}
+
+			const effect = new Effect(canvas.width, canvas.height); // Crea un nuevo efecto con el tamaño del canvas
+			let lastTime = 0; // Tiempo de inicio de la animación en milisegundos
+			const fps = 160; // Velocidad de los símbolos en el canvas en fotogramas por segundo
+			const newFrame = 1000 / fps; // Tiempo de cada frame de la animación en milisegundos 
+			let timer = 0; // Tiempo de cada frame de la animación en milisegundos
+
+			function animate(timeStamp) {
+				const deltaTime = timeStamp - lastTime;
+				lastTime = timeStamp;
+				if (timer > newFrame) {
+					ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; // Color de fondo del canvas con opacidad para que los símbolos se desvanezcan
+					ctx.textAlign = 'center'; // Alineación del texto
+					ctx.fillRect(0, 0, canvas.width, canvas.height); // Dibuja un rectángulo en el canvas con el color de fondo definido para que los símbolos se desvanezcan
+					ctx.fillStyle = gradient; //'#0aff0a'; // Color del texto
+					ctx.font = effect.fontSize + 'px monoespace'; // Tamaño y tipo de fuente
+					effect.symbols.forEach(symbol => symbol.draw(ctx)); // Dibuja los símbolos en el canvas
+					timer = 0;
+				}
+				else
+					timer += deltaTime;
+				requestAnimationFrame(animate); // Función recursiva para animar los símbolos en el canvas
+			}
+			animate(0); // Inicia la animación de los símbolos en el canvas
+		</script>
+	</center>
+</body>
+
+<script id="seedrandom">
+	!(function (f, a, c) {
+		var s,
+			l = 256,
+			p = 'random',
+			d = c.pow(l, 6),
+			g = c.pow(2, 52),
+			y = 2 * g,
+			h = l - 1;
+		function n(n, t, r) {
+			function e() {
+				for (var n = u.g(6), t = d, r = 0; n < g;)
+					(n = (n + r) * l), (t *= l), (r = u.g(1));
+				for (; y <= n;) (n /= 2), (t /= 2), (r >>>= 1);
+				return (n + r) / t;
+			}
+			var o = [],
+				i = j
+					(
+						(function n(t, r) {
+							var e,
+								o = [],
+								i = typeof t;
+							if (r && 'object' == i)
+								for (e in t)
+									try {
+										o.push(n(t[e], r - 1));
+									}
+									catch (n) { }
+							return o.length ? o : 'string' == i ? t : t + '\0';
+						}
+						)
+							(
+								(t = 1 == t ? { entropy: !0 } : t || {}).entropy
+									? [n, S(a)]
+									: null == n
+										? (function () {
+											try {
+												var n;
+												return (
+													s && (n = s.randomBytes)
+														? (n = n(l))
+														: ((n = new Uint8Array(l)),
+															(f.crypto || f.msCrypto).getRandomValues(n)),
+													S(n)
+												);
+											}
+											catch (n) {
+												var t = f.navigator,
+													r = t && t.plugins;
+												return [+new Date(), f, r, f.screen, S(a)];
+											}
+										}
+										)()
+										: n,
+								3,
+							),
+						o,
+					),
+				u = new m(o);
+			return
+			(
+				(e.int32 = function () {
+					return 0 | u.g(4);
+				}
+				),
+				(e.quick = function () {
+					return u.g(4) / 4294967296;
+				}
+				),
+				(e.double = e),
+				j(S(u.S), a),
+				(
+					t.pass ||
+					r ||
+					function (n, t, r, e) {
+						return
+						(
+							e &&
+							(e.S && v(e, u),
+								(n.state = function () {
+									return v(u, {});
+								}
+								)
+							),
+							r ? ((c[p] = n), t) : n
+						);
+					}
+				)
+					(e, i, 'global' in t ? t.global : this == c, t.state)
+			);
+		}
+		function m(n) {
+			var t,
+				r = n.length,
+				u = this,
+				e = 0,
+				o = (u.i = u.j = 0),
+				i = (u.S = []);
+			for (r || (n = [r++]); e < l;) i[e] = e++;
+			for (e = 0; e < l; e++)
+				(i[e] = i[(o = h & (o + n[e % r] + (t = i[e])))]), (i[o] = t);
+			(u.g = function (n) {
+				for (var t, r = 0, e = u.i, o = u.j, i = u.S; n--;)
+					(t = i[(e = h & (e + 1))]),
+						(r = r * l + i[h & ((i[e] = i[(o = h & (o + t))]) + (i[o] = t))]);
+				return (u.i = e), (u.j = o), r;
+			}
+			)
+				(l);
+		}
+		function v(n, t) {
+			return (t.i = n.i), (t.j = n.j), (t.S = n.S.slice()), t;
+		}
+		function j(n, t) {
+			for (var r, e = n + '', o = 0; o < e.length;)
+				t[h & o] = h & ((r ^= 19 * t[h & o]) + e.charCodeAt(o++));
+			return S(t);
+		}
+		function S(n) {
+			return String.fromCharCode.apply(0, n);
+		}
+		if ((j(c.random(), a), 'object' == typeof module && module.exports)) {
+			module.exports = n;
+			try {
+				s = require('crypto');
+			}
+			catch (n) { }
+		}
+		else
+			'function' == typeof define && define.amd
+				? define(function () {
+					return n;
+				}
+				)
+				: (c['seed' + p] = n);
+	}
+	)
+		('undefined' != typeof self ? self : this, [], Math);
+</script>
+
+<script>
+	// UTILS
+	function getRandomFloat(min, max, random) {
+		return random() * (max - min) + min;
+	}
+
+	function getRandomInteger(min, max, random) {
+		min = Math.ceil(min);
+		max = Math.floor(max);
+		return Math.floor(random() * (max - min)) + min;
+	}
+
+	//DRAWING
+	function getColor2(previousColor, random) {
+		let hue;
+		if (previousColor) {
+			const previousHue = parseInt(previousColor.split(',')[0].split('(')[1]);
+			hue = (previousHue + 180) % 360;
+		}
+		else {
+			hue = random() * 360;
+		}
+		const saturation = random() * 100;
+		const lightness = random() * 650;
+
+		return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+	}
+
+	function getColor(value, random) {
+		const hue = value % 360;
+		const saturation = random() * 100;
+		const lightness = random() * 350;
+		return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+	}
+
+	function getRandomColor(random) {
+		const red = Math.floor(random() * 256); // Valor entre 0 y 255
+		const green = Math.floor(random() * 256);
+		const blue = Math.floor(random() * 256);
+
+		return `rgb(${red}, ${green}, ${blue})`;
+	}
+
+	function getColorFromId(id) {
+		const random = (seed) => {
+			const x = Math.sin(seed) * 10000;
+			return x - Math.floor(x);
+		};
+
+		const red = Math.floor(random(id) * 256);
+		const green = Math.floor(random(id + 1) * 256);
+		const blue = Math.floor(random(id + 2) * 256);
+
+		return `rgb(${red}, ${green}, ${blue})`;
+	}
+
+	const mouse =
+	{
+		x: 0,
+		y: 0,
+	};
+
+	window.addEventListener('mousemove', (event) => {
+		mouse.x = event.x;
+		mouse.y = event.y;
+	});
+
+	class FlowFieldEffect {
+		#ctx;
+		#width;
+		#height;
+		#random;
+
+		constructor(ctx, width, height, rng, reception) {
+			this.#ctx = ctx;
+			this.reception = reception;
+			this.#width = width;
+			this.#random = rng;
+			this.#height = height;
+			this.scale = 0.5 //getRandomFloat(0, 0.9, this.#random);
+		}
+
+		packetText() {
+			const station = this.reception.stationName;
+			const satellite = this.reception.satelliteName;
+			const score = this.reception.receptionScore;
+			const font = "bold 20px Arial";
+			const colorf = getColorFromId(this.reception.tokenId);
+			const colors = colorf
+			const colorb = getColorFromId(this.reception.tokenId + 50);
+
+			// STATION //
+			this.#ctx.textAlign = "center";
+			this.#ctx.translate(0, -260);
+			this.#ctx.lineWidth = 1;
+			this.#ctx.font = font;
+			this.#ctx.fillStyle = colorf;
+			this.#ctx.strokeStyle = colors;
+			this.#ctx.strokeText("STATION: " + station, 0, 0);
+			this.#ctx.fillText("STATION: " + station, 0, 0);
+
+			this.#ctx.lineWidth = 5;
+			this.#ctx.strokeStyle = colorb;
+			var dimenStat = this.#ctx.measureText("STATION: " + station + 10);
+			this.#ctx.strokeRect(-dimenStat.width / 2, -25, dimenStat.width, 40);
+			this.#ctx.translate(0, 260);
+
+			// SATELLITE //
+			this.#ctx.translate(0, 230);
+			this.#ctx.textAlign = "center";
+			this.#ctx.lineWidth = 1;
+			this.#ctx.font = font;
+			this.#ctx.fillStyle = colorf;
+			this.#ctx.strokeStyle = colors;
+			this.#ctx.strokeText("SATELLITE: " + satellite, 0, 0);
+			this.#ctx.fillText("SATELLITE: " + satellite, 0, 0);
+
+			this.#ctx.lineWidth = 5;
+			this.#ctx.strokeStyle = colorb;
+			var dimenStat = this.#ctx.measureText("SATELLITE: " + satellite + 10);
+			this.#ctx.strokeRect(-dimenStat.width / 2, -25, dimenStat.width, 40);
+			this.#ctx.translate(0, -230);
+
+			// SCORE //
+			this.#ctx.translate(0, -200);
+			this.#ctx.textAlign = "center";
+			this.#ctx.lineWidth = 1;
+			this.#ctx.font = font;
+			this.#ctx.fillStyle = (score > 5) ? "green" : "red";
+			this.#ctx.strokeStyle = (score > 5) ? "green" : "red";
+			this.#ctx.strokeText(score + " / 10", 0, 0);
+			this.#ctx.fillText(score + " / 10", 0, 0);
+
+			this.#ctx.lineWidth = 5;
+			this.#ctx.strokeStyle = colorb;
+			var dimenStat = this.#ctx.measureText(score + " / 10" + 10);
+			this.#ctx.strokeRect(-dimenStat.width / 2, -30, dimenStat.width, 50);
+			this.#ctx.translate(0, -250);
+		}
+
+
+		drawLine(level) {
+			const spread = Number(this.reception.receptionScore) / 10;
+			const maxLevel = 5;
+			const branches = 2;
+			const angle = Math.PI * 2 * spread;
+
+			if (level > maxLevel) return;
+			this.#ctx.strokeStyle = getRandomColor(this.#random);
+			this.#ctx.lineWidth = 5;
+			this.#ctx.beginPath();
+			this.#ctx.moveTo(0, 0);
+			this.#ctx.lineTo(150, 0);
+			this.#ctx.stroke();
+			for (let i = 0; i < branches; i++) {
+				this.#ctx.save();
+				this.#ctx.translate(300 * i / (branches + 1), 0);
+				this.#ctx.scale(this.scale, this.scale); //jugar
+				this.#ctx.save();
+
+				this.#ctx.rotate(angle);
+				this.drawLine(level + 1);
+				this.#ctx.restore();
+				this.#ctx.save();
+
+				this.#ctx.rotate(-angle);
+				this.drawLine(level + 1);
+				this.#ctx.restore();
+
+				this.#ctx.restore();
+			}
+		}
+
+		draw() {
+			const sides = Math.floor(this.reception.receptionScore) + 3;
+			this.#ctx.clearRect(0, 0, this.#width, this.#height); // Limpia el canvas antes de dibujar
+			this.#ctx.translate(this.#width / 2, this.#height / 2);
+			for (let i = 0; i < sides; i++) {
+				this.drawLine(0);
+				this.#ctx.rotate(((Math.PI * 2) / sides));
+			}
+			this.packetText();
+		}
+	}
+
+	const draw = (canvas, ctx, reception) => {
+		const { packetId } = reception
+
+		const seed = parseInt(packetId.substring(0, 8), 16);
+		const rng = new Math.seedrandom(seed.toString());
+
+		for (i in seed) {
+			rng();
+		}
+		console.log(reception);
+		const width = canvas.width;
+		const height = canvas.height;
+		const radius = 1;
+		const flowfield = new FlowFieldEffect(ctx, width, height, rng, reception);
+		flowfield.draw();
+	};
+
+	async function main(
+		reception =
+			{
+				tokenId: 1,
+				rawPacket: 'sgAGAhIMUQ/j//z7AAAAAAAAAAAAAA==',
+				packetId: '7f9a1fec-7802-4d08-b72f-d0e47a81d8ce',
+				stationName: 'EA2CQ',
+				stationId: 165308769,
+				location_lat: 42.757,
+				location_long: -2.861,
+				timestamp: '+055733-12-13T20:32:00.203+00:00',
+				receptionScore: 7.5
+			},
+	) {
+		console.log('main: ', reception);
+		let params = new URL(document.location).searchParams;
+
+		let tokenId = params.get('tokenId') ?? reception.tokenId;
+		let rawPacket = params.get('rawPacket') ?? reception.rawPacket;
+		let packetId = params.get('packetId')?.split('-').join('') ?? reception.packetId.split('-').join('');
+		let stationName = params.get('stationName') ?? reception.stationName;
+		let stationId = params.get('stationId') ?? reception.stationId;
+		let location_lat = params.get('location_lat') ?? reception.location_lat;
+		let location_long = params.get('location_long') ?? reception.location_long;
+		let timestamp = new Date(params.get('timestamp')).getTime() ?? new Date(reception.timestamp).getTime();
+		let receptionScore = params.get('receptionScore') ?? reception.receptionScore;
+		let distance = params.get('distance') ?? reception.distance;
+		let canvasWidth = params.get('canvas_width') ?? 600;
+		let canvasHeight = params.get('canvas_height') ?? 600;
+
+		if (
+			tokenId &&
+			rawPacket &&
+			packetId &&
+			stationName &&
+			stationId &&
+			location_lat &&
+			location_long &&
+			timestamp &&
+			receptionScore &&
+			distance
+		) {
+			reception =
+			{
+				tokenId,
+				rawPacket,
+				packetId: rawPacket.split('-').join(''),
+				stationName,
+				stationId,
+				location_lat,
+				location_long,
+				timestamp: new Date(timestamp).getTime(),
+				receptionScore,
+				distance,
+			};
+		}
+		console.log('reception: ', reception);
+
+		let canvasRoot = document.getElementById('root');
+		if (canvasRoot.children.length > 0) {
+			canvas = canvasRoot.children[0];
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+		}
+		else {
+			canvas = document.createElement('canvas');
+			canvas.id = 'canvas';
+			canvas.width = canvasWidth;
+			canvas.height = canvasHeight;
+			canvasRoot.appendChild(canvas);
+			ctx = canvas.getContext('2d');
+		}
+		draw(canvas, ctx, reception);
+	}
+
+	let canvas, ctx;
+
+	document.onload = main();
+</script>
+
+</html>

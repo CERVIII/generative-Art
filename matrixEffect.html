@@ -78,7 +78,7 @@
 			{
 				this.canvasWidth = canvasWidth;
 				this.canvasHeight = canvasHeight;
-				this.fontSize = 25;
+				this.fontSize = 15;
 				this.columns = this.canvasWidth / this.fontSize;
 				this.symbols = [];
 				this.#initialize();
@@ -117,7 +117,7 @@
 				ctx.textAlign = 'center'; // Alineación del texto
 				ctx.fillRect(0, 0, canvas.width, canvas.height); // Dibuja un rectángulo en el canvas con el color de fondo definido para que los símbolos se desvanezcan
 				ctx.fillStyle = gradient; //'#0aff0a'; // Color del texto
-				ctx.font = effect.fontSize + 'px monospace'; // Tamaño y tipo de fuente
+				ctx.font = effect.fontSize + 'px monoespace'; // Tamaño y tipo de fuente
 				effect.symbols.forEach(symbol => symbol.draw(ctx)); // Dibuja los símbolos en el canvas
 				timer = 0;
 			}
